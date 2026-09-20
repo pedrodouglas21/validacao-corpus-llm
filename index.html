@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>Validação Clínica do Corpus</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">Rx</div>
+      <div>
+        <strong>LLM-Council</strong>
+        <span>Validação clínica do corpus</span>
+      </div>
+    </div>
+    <div id="sessionBadge" class="session-badge hidden"></div>
+  </header>
+
+  <main class="shell">
+    <section id="loadingView" class="panel center-panel">
+      <div class="spinner"></div>
+      <h1>Preparando o ambiente</h1>
+      <p>Carregando a sessão de validação…</p>
+    </section>
+
+    <section id="accessView" class="panel hero hidden">
+      <div class="eyebrow">PAINEL DO ESPECIALISTA</div>
+      <h1>Validação clínica dos casos farmacoterapêuticos</h1>
+      <p class="lead">Avalie cada caso de forma independente. Você verá apenas os casos e o instrumento de julgamento — sem informação sobre seleção, modelo ou condição experimental.</p>
+
+      <div class="notice">
+        <strong>Como funciona</strong>
+        <p>São quatro marcações em escala de 1 a 4, uma pergunta de segurança do caso e um comentário opcional. O progresso é salvo automaticamente.</p>
+      </div>
+
+      <form id="accessForm" class="form-grid">
+        <label class="field span-2">
+          <span>Código do especialista</span>
+          <input id="accessCode" autocomplete="one-time-code" placeholder="Ex.: LLM-XXXXXXXXXX" required />
+        </label>
+        <label class="field">
+          <span>Área profissional</span>
+          <select id="professionalArea" required>
+            <option value="">Selecione</option>
+            <option>Farmácia clínica / atenção farmacêutica</option>
+            <option>Farmacologia / farmacoterapia</option>
+            <option>Clínica médica</option>
+            <option>Segurança do paciente</option>
+            <option>Outra área da saúde</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Titulação mais alta</span>
+          <select id="highestDegree" required>
+            <option value="">Selecione</option>
+            <option>Graduação</option>
+            <option>Especialização / residência</option>
+            <option>Mestrado</option>
+            <option>Doutorado</option>
+            <option>Pós-doutorado</option>
+          </select>
+        </label>
+        <label class="field span-2">
+          <span>Tempo de experiência na área (anos)</span>
+          <input id="yearsExperience" type="number" min="0" max="80" step="1" required />
+        </label>
+
+        <div class="consent span-2">
+          <label>
+            <input id="consentCheck" type="checkbox" required />
+            <span>Declaro que li o <a id="consentLink" target="_blank" rel="noopener">TCLE aprovado</a>, tive oportunidade de esclarecer dúvidas e aceito participar desta etapa de validação.</span>
+          </label>
+        </div>
+        <button class="primary span-2" type="submit">Entrar na validação</button>
+        <p id="accessMessage" class="message span-2"></p>
+      </form>
+    </section>
+
+    <section id="workspaceView" class="hidden">
+      <div class="workspace-head">
+        <div>
+          <div class="eyebrow">VALIDAÇÃO CEGA</div>
+          <h1 id="caseTitle">Caso</h1>
+          <p id="caseMeta">Avaliação independente</p>
+        </div>
+        <div class="progress-card">
+          <div class="progress-copy">
+            <strong id="progressText">0 / 85</strong>
+            <span>casos concluídos</span>
+          </div>
+          <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+        </div>
+      </div>
+
+      <div class="layout">
+        <article class="panel case-panel">
+          <div class="panel-title-row">
+            <h2>Resumo clínico-farmacoterapêutico</h2>
+            <button id="fontToggle" class="ghost small" type="button">Texto maior</button>
+          </div>
+          <pre id="caseText" class="case-text"></pre>
+        </article>
+
+        <aside class="panel instrument-panel">
+          <div class="instrument-intro">
+            <h2>Instrumento de validação</h2>
+            <p>Marque a opção que melhor representa seu julgamento. <strong>3 ou 4</strong> na adequação global contam como validação para o I-CVI.</p>
+          </div>
+
+          <form id="evaluationForm">
+            <div class="rating-block">
+              <div><strong>1. Pertinência farmacoterapêutica</strong><p>O caso contém conteúdo relevante para avaliação farmacoterapêutica?</p></div>
+              <div class="scale" data-name="pertinence"></div>
+            </div>
+            <div class="rating-block">
+              <div><strong>2. Complexidade decisória</strong><p>O caso exige integração clínica suficiente para avaliar raciocínio, e não apenas recuperação factual?</p></div>
+              <div class="scale" data-name="complexity"></div>
+            </div>
+            <div class="rating-block">
+              <div><strong>3. Representatividade clínica</strong><p>O cenário é clinicamente plausível e representa uma situação farmacoterapêutica relevante?</p></div>
+              <div class="scale" data-name="representativeness"></div>
+            </div>
+            <div class="rating-block accent">
+              <div><strong>4. Adequação global do caso</strong><p>Considerando coerência, suficiência informacional e relevância, o caso é adequado para compor o corpus?</p></div>
+              <div class="scale" data-name="global_adequacy"></div>
+            </div>
+
+            <div class="binary-block">
+              <div>
+                <strong>Existe incoerência ou ausência de informação que impeça uma decisão farmacoterapêutica razoável?</strong>
+                <p>Marque “Sim” apenas quando o problema comprometer materialmente a interpretação do caso.</p>
+              </div>
+              <div class="binary-options">
+                <label><input type="radio" name="blocking_issue" value="false" required><span>Não</span></label>
+                <label><input type="radio" name="blocking_issue" value="true"><span>Sim</span></label>
+              </div>
+            </div>
+
+            <label id="blockerReasonWrap" class="field hidden">
+              <span>Motivo do impedimento</span>
+              <select id="blockerReason">
+                <option value="">Selecione</option>
+                <option>Inconsistência clínica ou laboratorial</option>
+                <option>Informação essencial ausente</option>
+                <option>Dado sintético implausível</option>
+                <option>Não há decisão farmacoterapêutica suficientemente definida</option>
+                <option>Outro</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Comentário opcional</span>
+              <textarea id="comment" rows="3" placeholder="Use apenas se desejar registrar uma observação específica sobre o caso."></textarea>
+            </label>
+
+            <div class="save-state" id="saveState">As alterações serão salvas automaticamente.</div>
+          </form>
+
+          <div class="nav-row">
+            <button id="prevBtn" class="ghost" type="button">← Anterior</button>
+            <button id="nextBtn" class="primary" type="button">Próximo →</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="doneView" class="panel center-panel hidden">
+      <div class="success-mark">✓</div>
+      <div class="eyebrow">ETAPA CONCLUÍDA</div>
+      <h1>Obrigado pela avaliação.</h1>
+      <p>Todos os casos foram registrados. Suas respostas permanecerão vinculadas apenas ao código de avaliação.</p>
+      <button id="reviewBtn" class="ghost" type="button">Revisar minhas respostas</button>
+    </section>
+  </main>
+
+  <footer>
+    <span>Estudo metodológico • casos inteiramente sintéticos • avaliação independente</span>
+    <a href="./admin.html">Área administrativa</a>
+  </footer>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

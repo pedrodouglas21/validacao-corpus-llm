@@ -1,0 +1,5 @@
+# Nunca versionar os artefatos privados
+admin_private/
+*.private.sql
+.env
+.DS_Store

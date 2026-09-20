@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Administração — Validação do Corpus</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark">Rx</div><div><strong>LLM-Council</strong><span>Administração da validação</span></div></div>
+    <a class="ghost small link-button" href="./">Painel do especialista</a>
+  </header>
+
+  <main class="shell">
+    <section id="adminLogin" class="panel hero">
+      <div class="eyebrow">ÁREA RESTRITA</div>
+      <h1>Acompanhamento da validação</h1>
+      <p class="lead">Entre com o e-mail cadastrado como administrador no Supabase.</p>
+      <form id="adminLoginForm" class="form-grid compact">
+        <label class="field span-2"><span>E-mail</span><input id="adminEmail" type="email" required /></label>
+        <button class="primary span-2" type="submit">Enviar link de acesso</button>
+        <p id="adminLoginMessage" class="message span-2"></p>
+      </form>
+    </section>
+
+    <section id="adminView" class="hidden">
+      <div class="workspace-head">
+        <div><div class="eyebrow">MONITORAMENTO</div><h1>Validação do corpus</h1><p>Indicadores atualizados diretamente do banco.</p></div>
+        <button id="logoutBtn" class="ghost" type="button">Sair</button>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric"><span>Avaliações completas</span><strong id="mEvaluations">—</strong></div>
+        <div class="metric"><span>Casos com 6 avaliações</span><strong id="mReady">—</strong></div>
+        <div class="metric"><span>S-CVI/Ave disponível</span><strong id="mSCVI">—</strong></div>
+        <div class="metric"><span>Casos abaixo de 0,78</span><strong id="mReview">—</strong></div>
+      </div>
+
+      <section class="panel">
+        <div class="panel-title-row">
+          <div><h2>Casos</h2><p class="muted">I-CVI = proporção de avaliações globais 3–4 entre respostas completas.</p></div>
+          <button id="exportBtn" class="ghost small" type="button">Exportar CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Caso</th><th>Papel interno</th><th>n</th><th>I-CVI</th><th>Pert.</th><th>Compl.</th><th>Repres.</th><th>Adeq.</th><th>Alertas</th><th>Status</th>
+            </tr></thead>
+            <tbody id="caseTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title-row"><div><h2>Progresso dos especialistas</h2><p class="muted">Nenhum avaliador vê dados de outros participantes.</p></div></div>
+        <div id="evaluatorGrid" class="evaluator-grid"></div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="./admin.js"></script>
+</body>
+</html>
