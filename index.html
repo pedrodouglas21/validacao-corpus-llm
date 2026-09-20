@@ -85,8 +85,9 @@
       <div class="workspace-head">
         <div>
           <div class="eyebrow">VALIDAÇÃO CEGA</div>
-          <h1 id="caseTitle">Caso</h1>
+          <h1 id="caseTitle">Caso clínico em avaliação</h1>
           <p id="caseMeta">Avaliação independente</p>
+          <p id="caseBlindId" class="case-blind-id">Identificador cego do caso</p>
         </div>
         <div class="progress-card">
           <div class="progress-copy">
@@ -99,6 +100,14 @@
 
       <div class="layout">
         <article class="panel case-panel">
+          <div id="patientHero" class="patient-hero hidden">
+            <div id="patientAvatar" class="patient-avatar">🧑</div>
+            <div class="patient-copy">
+              <strong id="patientSummary">Paciente em avaliação</strong>
+              <div id="patientDetails" class="patient-details"></div>
+              <p class="patient-note">Resumo visual apenas para facilitar a leitura. O identificador do caso permanece cego e não indica qualidade, prioridade ou ordem de seleção.</p>
+            </div>
+          </div>
           <div class="panel-title-row">
             <h2>Resumo clínico-farmacoterapêutico</h2>
             <button id="fontToggle" class="ghost small" type="button">Texto maior</button>
@@ -109,7 +118,7 @@
         <aside class="panel instrument-panel">
           <div class="instrument-intro">
             <h2>Instrumento de validação</h2>
-            <p>Marque a opção que melhor representa seu julgamento. <strong>3 ou 4</strong> na adequação global contam como validação para o I-CVI.</p>
+            <p>Marque a opção que melhor representa seu julgamento clínico. Para fins de validade de conteúdo, escores <strong>3 ou 4</strong> em adequação global contam como concordância para o I-CVI.</p>
           </div>
 
           <form id="evaluationForm">

@@ -72,3 +72,10 @@ input:focus,select:focus,textarea:focus{border-color:#5b9aa0;box-shadow:0 0 0 4p
 footer{max-width:1500px;margin:0 auto 30px;padding:0 24px;display:flex;justify-content:space-between;color:#8491a3;font-size:11px}
 @media(max-width:1050px){.layout{grid-template-columns:1fr}.instrument-panel{position:static}.case-text{max-height:none}.metrics-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:650px){.shell{padding:22px 14px 45px}.topbar{padding:0 14px}.hero{padding:25px}.form-grid{grid-template-columns:1fr}.span-2{grid-column:span 1}.workspace-head{align-items:stretch;flex-direction:column}.progress-card{width:100%}.scale{grid-template-columns:repeat(2,1fr)}.metrics-grid{grid-template-columns:1fr}.brand span{display:none}footer{flex-direction:column;gap:8px}}
+.case-blind-id{margin:6px 0 0;color:#7b8797;font-size:12px}
+.patient-hero{display:flex;gap:16px;align-items:flex-start;margin-bottom:18px;padding:16px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,#eef7f7,#f8fbff)}
+.patient-avatar{width:72px;height:72px;border-radius:18px;display:grid;place-items:center;font-size:38px;background:linear-gradient(135deg,#123d63,#0f5f66);color:#fff;box-shadow:0 10px 24px rgba(18,61,99,.16);flex:0 0 72px}
+.patient-copy strong{display:block;font-size:16px;margin-bottom:6px}
+.patient-details{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.patient-chip{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:#fff;border:1px solid #dbe5ef;color:#425468;font-size:12px;font-weight:700}
+.patient-note{margin:0;color:#64748b;font-size:12px;line-height:1.45}

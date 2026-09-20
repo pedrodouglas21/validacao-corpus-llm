@@ -41,6 +41,70 @@ if (!CONFIG.CONSENT_URL || CONFIG.CONSENT_URL.includes("COLE_AQUI")) {
 
 let session = null, cases = [], evaluations = new Map(), order = [], index = 0, saveTimer = null;
 
+function localizeSnapshot(snapshot){
+  if(!snapshot) return "";
+  let t = snapshot.replace(/^VAL-\d+\s*/m, "").trim();
+  const replacements = [
+    [/\bDemographics\b/g, "Dados demográficos"],
+    [/\bAge:\s*/g, "Idade: "],
+    [/\bSex:\s*Male\b/g, "Sexo: Masculino"],
+    [/\bSex:\s*Female\b/g, "Sexo: Feminino"],
+    [/\bSex:\s*Other\b/g, "Sexo: Outro"],
+    [/\bRelevant active conditions\b/g, "Condições ativas relevantes"],
+    [/\bCurrent medications\b/g, "Medicamentos em uso"],
+    [/\bRelevant medications\b/g, "Medicamentos relevantes"],
+    [/\bAllergies\b/g, "Alergias"],
+    [/\bVitals\b/g, "Sinais vitais"],
+    [/\bKey labs\b/g, "Exames laboratoriais relevantes"],
+    [/\bKey recent laboratory data\b/g, "Dados laboratoriais recentes relevantes"],
+    [/\bLaboratory data\b/g, "Dados laboratoriais"],
+    [/\bRenal function\b/g, "Função renal"],
+    [/\bHepatic function\b/g, "Função hepática"],
+    [/\bClinical context\b/g, "Contexto clínico"],
+    [/\bClinical focus\b/g, "Foco clínico"],
+    [/\bMedication-related concerns\b/g, "Pontos farmacoterapêuticos relevantes"],
+    [/\bProblem list\b/g, "Lista de problemas"],
+    [/\bPast medical history\b/g, "Histórico clínico pregresso"],
+    [/\bRecent events\b/g, "Eventos recentes"],
+    [/\bChief concern\b/g, "Queixa principal"],
+    [/\bAssessment target\b/g, "Alvo de avaliação"],
+    [/\bOther relevant information\b/g, "Outras informações relevantes"],
+    [/\bMale\b/g, "Masculino"],
+    [/\bFemale\b/g, "Feminino"]
+  ];
+  replacements.forEach(([pattern, repl]) => { t = t.replace(pattern, repl); });
+  return t;
+}
+
+function parsePatientMeta(snapshot){
+  const ageMatch = snapshot?.match(/Age:\s*(\d+)/i);
+  const sexMatch = snapshot?.match(/Sex:\s*([A-Za-z]+)/i);
+  const age = ageMatch ? Number(ageMatch[1]) : null;
+  const sexRaw = sexMatch ? sexMatch[1].toLowerCase() : null;
+  const sex = sexRaw === "male" ? "Masculino" : sexRaw === "female" ? "Feminino" : sexRaw ? sexRaw : null;
+  return { age, sex };
+}
+
+function avatarFor(meta){
+  const age = meta?.age;
+  const sex = meta?.sex;
+  if (age !== null && age >= 60) return sex === "Feminino" ? "👵" : sex === "Masculino" ? "👴" : "🧓";
+  if (age !== null && age < 18) return sex === "Feminino" ? "👧" : sex === "Masculino" ? "👦" : "🧒";
+  return sex === "Feminino" ? "👩" : sex === "Masculino" ? "👨" : "🧑";
+}
+
+function renderPatientHero(snapshot){
+  const meta = parsePatientMeta(snapshot);
+  $("patientHero").classList.remove("hidden");
+  $("patientAvatar").textContent = avatarFor(meta);
+  $("patientSummary").textContent = meta.age !== null ? `Paciente de ${meta.age} anos` : "Paciente em avaliação";
+  const chips = [];
+  if (meta.age !== null) chips.push(`<span class="patient-chip">${meta.age} anos</span>`);
+  if (meta.sex) chips.push(`<span class="patient-chip">${meta.sex}</span>`);
+  chips.push(`<span class="patient-chip">Caso clínico sintético</span>`);
+  $("patientDetails").innerHTML = chips.join("");
+}
+
 function seededRank(uid, code) {
   let h = 2166136261;
   const s = uid + "|" + code;
@@ -103,9 +167,11 @@ function progress(){
 function renderCase(){
   const c = getCurrent();
   if (!c) return;
-  $("caseTitle").textContent = c.case_code;
+  $("caseTitle").textContent = "Caso clínico em avaliação";
   $("caseMeta").textContent = `Caso ${index+1} de ${order.length} • ordem individual randomizada`;
-  $("caseText").textContent = c.snapshot;
+  $("caseBlindId").textContent = `Identificador cego do caso: ${c.case_code}`;
+  renderPatientHero(c.snapshot);
+  $("caseText").textContent = localizeSnapshot(c.snapshot);
   populateForm(evaluations.get(c.id));
   $("prevBtn").disabled = index === 0;
   $("nextBtn").textContent = index === order.length-1 ? "Concluir →" : "Próximo →";
