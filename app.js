@@ -13,6 +13,8 @@ if (!CONFIG.SUPABASE_URL || CONFIG.SUPABASE_URL.includes("SEU-PROJETO") ||
   throw new Error("Supabase not configured.");
 }
 
+const COLLECTION_ENABLED = CONFIG.COLLECTION_ENABLED === true;
+
 const supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
@@ -151,6 +153,11 @@ async function loadWorkspace(){
 }
 async function bootstrap(){
   try{
+    if (!COLLECTION_ENABLED) {
+      show("accessView");
+      $("accessMessage").textContent = "TCLE disponível para leitura. A coleta ainda não foi habilitada.";
+      $("accessMessage").className = "message error span-2";
+    }
     const {data:{session:s}} = await supabase.auth.getSession();
     session = s;
     if (!session){
@@ -169,6 +176,11 @@ async function bootstrap(){
 }
 $("accessForm").addEventListener("submit", async e=>{
   e.preventDefault();
+  if (!COLLECTION_ENABLED) {
+    $("accessMessage").textContent="A coleta está temporariamente bloqueada até a confirmação ética desta versão do TCLE.";
+    $("accessMessage").className="message error span-2";
+    return;
+  }
   if (!CONFIG.CONSENT_URL || CONFIG.CONSENT_URL.includes("COLE_AQUI")) {
     $("accessMessage").textContent="O link do TCLE precisa ser configurado antes da coleta.";
     $("accessMessage").className="message error span-2"; return;

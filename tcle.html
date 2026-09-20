@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TCLE - Validação Clínica do Corpus</title>
+<style>
+:root{--ink:#172536;--muted:#637083;--line:#dce5ef;--brand:#194469;--teal:#0f5f66;--soft:#eef6f8;--paper:#fff;}
+*{box-sizing:border-box}
+html{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f8fc;color:var(--ink)}
+body{margin:0}
+.top{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.topin{max-width:980px;margin:auto;padding:14px 22px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.brand{font-weight:850;color:var(--brand)} .sub{font-size:12px;color:var(--muted)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+button,a.btn{border:1px solid var(--line);background:white;color:var(--ink);padding:9px 12px;border-radius:11px;text-decoration:none;font-weight:750;font-size:13px;cursor:pointer}
+a.primary{background:linear-gradient(135deg,var(--brand),var(--teal));color:#fff;border:0}
+main{max-width:900px;margin:34px auto 60px;padding:0 18px}
+.paper{background:white;border:1px solid var(--line);border-radius:24px;box-shadow:0 18px 60px rgba(30,52,79,.10);padding:44px}
+.kicker{font-size:12px;letter-spacing:.14em;font-weight:850;color:var(--teal);text-align:center}
+h1{font-size:30px;text-align:center;line-height:1.12;color:var(--brand);margin:9px 0 8px}
+.subtitle{text-align:center;color:var(--muted);margin-bottom:28px}
+.meta{display:grid;grid-template-columns:170px 1fr;border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:22px}
+.meta div{padding:10px 12px;border-bottom:1px solid var(--line)} .meta div:nth-last-child(-n+2){border-bottom:0}
+.meta .k{font-weight:800;color:var(--brand);background:#f4f8fb}
+.notice{padding:16px 18px;background:#eaf6f5;border:1px solid #cfe7e4;border-radius:14px;margin:22px 0}
+.notice strong{color:var(--teal)} .notice p{margin:5px 0 0}
+h2{font-size:18px;color:var(--brand);margin:28px 0 8px;padding-top:8px;border-top:1px solid #edf1f5}
+p{font-family:Georgia,"Times New Roman",serif;font-size:16px;line-height:1.68;text-align:justify;margin:8px 0}
+.consent{margin-top:30px;background:linear-gradient(135deg,var(--brand),var(--teal));color:#fff;border-radius:16px;padding:20px;text-align:center}
+.consent p{font-family:inherit;text-align:center;font-size:14px}
+.foot{text-align:center;color:var(--muted);font-size:12px;margin-top:24px}
+@media(max-width:650px){.paper{padding:24px 18px;border-radius:16px}.meta{grid-template-columns:1fr}.meta .k{border-bottom:0}h1{font-size:24px}p{font-size:15px}}
+@media print{body{background:white}.top,.notice.internal{display:none}main{margin:0;max-width:none;padding:0}.paper{box-shadow:none;border:0;border-radius:0;padding:0}}
+</style>
+</head>
+<body>
+<div class="top"><div class="topin">
+<div><div class="brand">UFPB • PPGMDS</div><div class="sub">Pesquisa LLM-Council farmacoterapêutico</div></div>
+<div class="actions">
+<a class="btn" href="./">← Voltar à validação</a>
+<a class="btn primary" href="./TCLE_LLM_Atualizado_v2_0.pdf" target="_blank" rel="noopener">Abrir PDF</a>
+<button onclick="window.print()">Imprimir / Salvar</button>
+</div>
+</div></div>
+<main><article class="paper">
+<div class="kicker">TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO</div>
+<h1>TCLE • Especialistas avaliadores</h1>
+<div class="subtitle">Validação clínica do corpus e avaliação cega de respostas de inteligência artificial</div>
+
+<div class="meta">
+<div class="k">Pesquisa</div><div>Modelos de Decisão Baseados em Linguagem na Farmacoterapia: avaliação comparativa de segurança e adequação clínica entre deliberação multiagente e modelo único equiparado</div>
+<div class="k">Aprovação ética</div><div>CAAE 98814726.6.0000.5188 • Parecer nº 8.625.931 • 4 de agosto de 2026</div>
+<div class="k">Versão</div><div>TCLE v2.0 • 20 de setembro de 2026</div>
+<div class="k">Modalidade</div><div>Participação virtual de especialistas • risco mínimo</div>
+</div>
+
+<section><h2>1. Convite e identificação da pesquisa</h2><p>Você está sendo convidado(a) a participar, na condição de especialista avaliador(a), da pesquisa intitulada “Modelos de Decisão Baseados em Linguagem na Farmacoterapia: avaliação comparativa de segurança e adequação clínica entre deliberação multiagente e modelo único equiparado”, vinculada ao Programa de Pós-Graduação em Modelos de Decisão e Saúde da Universidade Federal da Paraíba (PPGMDS/UFPB).</p>
+<p>A pesquisa é conduzida pelo pesquisador Pedro Douglas Alves Braga, sob orientação da Prof.ª Dr.ª Walleri Christini Torelli Reis e da Prof.ª Dr.ª Ana Hermínia Andrade e Silva, com coorientação do Prof. Dr. Wallace Entringer Bottacin.</p>
+<p>O projeto foi aprovado pelo Comitê de Ética em Pesquisa do Centro de Ciências da Saúde da Universidade Federal da Paraíba (CEP/CCS/UFPB), sob CAAE nº 98814726.6.0000.5188 e Parecer Consubstanciado nº 8.625.931, emitido em 4 de agosto de 2026. A pesquisa é considerada de risco mínimo e não envolve intervenção clínica em pacientes reais.</p>
+<p>Este Termo apresenta os objetivos, procedimentos, possíveis riscos e benefícios, garantias de sigilo e direitos relacionados à sua participação, para que sua decisão seja livre, esclarecida e voluntária.</p></section><section><h2>2. Objetivo da pesquisa</h2><p>O objetivo geral da pesquisa é avaliar, em casos clínicos farmacoterapêuticos complexos, se uma arquitetura deliberativa multiagente de grandes modelos de linguagem, denominada LLM-Council farmacoterapêutico, produz respostas mais seguras e clinicamente mais adequadas do que um modelo único utilizado sob condições de comparação controladas.</p>
+<p>De modo específico, o estudo busca comparar a segurança farmacoterapêutica, a adequação/efetividade potencial das recomendações e a eficiência computacional das diferentes arquiteturas, preservando condições padronizadas de geração e avaliação.</p></section><section><h2>3. Por que esta pesquisa está sendo realizada</h2><p>Grandes modelos de linguagem vêm sendo utilizados como ferramentas de apoio à busca de informações e ao raciocínio em saúde. Apesar do potencial dessas tecnologias, respostas aparentemente plausíveis podem conter erros, omissões, recomendações inadequadas ou sugestões potencialmente danosas.</p>
+<p>Na farmacoterapia, esses problemas podem envolver interações medicamentosas, contraindicações, duplicidades, necessidade de ajuste de dose, escolha inadequada de medicamentos, falhas de monitoramento e outros riscos relacionados ao uso de medicamentos. A pesquisa busca avaliar, em ambiente experimental controlado, se uma arquitetura deliberativa multiagente pode reduzir esses problemas sem confundir eventual ganho de desempenho com simples aumento de processamento computacional.</p></section><section><h2>4. Quem está sendo convidado(a)</h2><p>São convidados profissionais com formação e/ou experiência relacionada à saúde, farmacoterapia, farmácia clínica, cuidado farmacêutico, medicina, segurança do paciente, prática baseada em evidências, docência, pesquisa clínica ou áreas correlatas.</p>
+<p>Sua participação será exclusivamente técnico-científica. Você não atuará como paciente, não será submetido(a) a intervenção clínica e não precisará fornecer dados pessoais de saúde.</p></section><section><h2>5. O que sua participação poderá envolver</h2><p>A pesquisa prevê duas atividades de avaliação por especialistas. Você poderá ser convidado(a) para uma delas ou, quando aplicável, para ambas. Participar de uma etapa não obriga a participação na outra.</p>
+<p>Etapa A - validação clínica do corpus de casos sintéticos. Nesta etapa, serão apresentados até 85 casos clínicos farmacoterapêuticos inteiramente sintéticos, identificados apenas por códigos. Para cada caso, você será convidado(a) a avaliar, em escala de quatro pontos, a pertinência farmacoterapêutica, a complexidade decisória, a representatividade clínica e a adequação global do caso. Também será perguntado se existe alguma incoerência ou ausência de informação capaz de impedir uma decisão farmacoterapêutica razoável. Comentários adicionais serão opcionais.</p>
+<p>Os casos serão apresentados de forma cega quanto à sua posição no processo de seleção. Você não será informado(a) sobre quais casos foram inicialmente propostos para o corpus principal ou mantidos como casos-reserva. As avaliações serão agregadas para estimar a validade de conteúdo do conjunto; elas não serão utilizadas para classificar, ranquear ou avaliar o desempenho individual dos especialistas.</p>
+<p>Etapa B - avaliação cega das respostas dos modelos de linguagem. Em etapa posterior, especialistas poderão avaliar respostas produzidas por sistemas de inteligência artificial para casos farmacoterapêuticos complexos. As respostas serão codificadas e apresentadas sem indicação de qual modelo, fornecedor ou arquitetura as produziu. Os critérios poderão incluir segurança farmacoterapêutica, adequação clínica, identificação de problemas relacionados à farmacoterapia, coerência lógica e compatibilidade com evidências científicas e diretrizes clínicas.</p>
+<p>Na etapa para a qual você for convidado(a), o sistema permitirá salvar o progresso e retomar a avaliação quando tecnicamente possível. Você poderá realizar pausas, interromper a atividade ou desistir da participação a qualquer momento.</p></section><section><h2>6. Sobre os casos clínicos e as respostas avaliadas</h2><p>Os casos clínicos utilizados no estudo são sintéticos, gerados computacionalmente, sem utilização de prontuários de pacientes reais e sem identificação de indivíduos reais. Eventuais inconsistências próprias de dados sintéticos fazem parte do controle de qualidade do estudo e poderão ser assinaladas pelos especialistas.</p>
+<p>Os materiais apresentados têm finalidade exclusiva de pesquisa. Nenhum caso, resposta de modelo ou julgamento realizado neste estudo deverá ser utilizado para orientar atendimento, prescrição, dispensação, diagnóstico ou qualquer conduta clínica real.</p></section><section><h2>7. Plataforma digital e informações registradas</h2><p>A participação ocorrerá preferencialmente em ambiente virtual, por meio de plataforma eletrônica desenvolvida para o estudo. A interface de avaliação é hospedada em serviço de páginas estáticas, e os registros das avaliações são armazenados em banco de dados com controle de acesso e políticas de segurança.</p>
+<p>Para os especialistas, o acesso será realizado mediante código individual. A plataforma registrará apenas dados mínimos de caracterização profissional necessários ao estudo, como área de atuação, titulação e tempo de experiência, além das avaliações, comentários facultativos, data/hora de consentimento e um identificador técnico de sessão. Não será solicitado CPF, endereço residencial, telefone, documento de identidade ou dado clínico pessoal.</p>
+<p>O progresso poderá ser salvo automaticamente. Como o acesso do avaliador utiliza uma sessão técnica do navegador, a retomada poderá depender do mesmo dispositivo e navegador utilizados inicialmente.</p></section><section><h2>8. Riscos e desconfortos</h2><p>Os riscos associados à sua participação são considerados mínimos. Os principais desconfortos possíveis são cansaço, fadiga visual, sobrecarga cognitiva, dúvida técnica ou desconforto ao analisar casos complexos ou recomendações potencialmente inseguras.</p>
+<p>Para reduzir esses riscos, a avaliação poderá ser realizada em blocos, com possibilidade de pausas e interrupção. Você poderá deixar de responder, suspender ou encerrar sua participação sem necessidade de justificativa.</p>
+<p>Existe ainda risco remoto de quebra de confidencialidade. Para minimizá-lo, os especialistas serão identificados por códigos, serão coletados apenas dados necessários, o banco terá acesso restrito e os resultados serão divulgados de forma agregada.</p></section><section><h2>9. Benefícios</h2><p>Não há benefício direto ou individual garantido pela participação. Como benefício indireto, sua colaboração poderá contribuir para o desenvolvimento de métodos mais rigorosos de avaliação de sistemas de inteligência artificial aplicados à farmacoterapia, à farmácia clínica, à segurança do paciente e ao suporte à decisão em saúde.</p></section><section><h2>10. Sigilo, confidencialidade e proteção de dados</h2><p>Os dados serão tratados de forma confidencial, codificada e em conformidade com a Lei Geral de Proteção de Dados Pessoais - LGPD (Lei nº 13.709/2018). O acesso aos dados individualizados será restrito à equipe autorizada.</p>
+<p>Os resultados poderão compor dissertação, artigos científicos, apresentações e relatórios, sempre de forma agregada ou desidentificada. Dados científicos desidentificados, como respostas de sistemas, prompts, parâmetros técnicos e conjuntos sem identificação dos especialistas, poderão ser disponibilizados em repositório científico para fins de transparência e reprodutibilidade. Informações capazes de identificar diretamente os participantes não serão disponibilizadas publicamente.</p></section><section><h2>11. Voluntariedade e direito de desistência</h2><p>Sua participação é inteiramente voluntária. Você pode recusar o convite, interromper a avaliação, deixar de responder qualquer item ou retirar seu consentimento, sem prejuízo profissional, acadêmico, institucional ou pessoal.</p>
+<p>Se desejar retirar seu consentimento após o envio das avaliações, entre em contato com a equipe de pesquisa e informe o código utilizado na participação. A remoção dos dados será realizada quando ainda for tecnicamente possível identificá-los antes da anonimização final, consolidação do banco e travamento da base de análise.</p></section><section><h2>12. Custos, remuneração, ressarcimento e indenização</h2><p>A participação não prevê remuneração e, por ocorrer preferencialmente em ambiente virtual, não se espera geração de despesas. Caso ocorra alguma despesa excepcional diretamente relacionada à participação, a situação poderá ser comunicada à equipe para avaliação conforme as normas éticas aplicáveis.</p>
+<p>Em caso de dano comprovadamente decorrente da participação na pesquisa, permanecem assegurados os direitos à assistência e à indenização previstos nas normas éticas brasileiras vigentes.</p></section><section><h2>13. Participação em ambiente virtual</h2><p>Recomenda-se utilizar dispositivo de uso seguro e, sempre que possível, participar em local reservado. Antes de aceitar participar, você poderá acessar, salvar ou imprimir este TCLE.</p>
+<p>O aceite eletrônico será registrado pela plataforma mediante marcação explícita de que o participante leu o TCLE e concorda voluntariamente em participar. Esse registro será associado à versão do TCLE apresentada e à data/hora do consentimento.</p></section><section><h2>14. Contatos da equipe de pesquisa</h2><p>Pedro Douglas Alves Braga - Programa de Pós-Graduação em Modelos de Decisão e Saúde, Universidade Federal da Paraíba. E-mail: pedro.douglas@academico.ufpb.br.</p>
+<p>Prof.ª Dr.ª Walleri Christini Torelli Reis - Departamento de Ciências Farmacêuticas, Universidade Federal da Paraíba. E-mail: wallerictr@gmail.com.</p>
+<p>Prof. Dr. Wallace Entringer Bottacin - Coorientador da pesquisa. E-mail: wallace.bottacin@ufpe.br.</p></section><section><h2>15. Contato institucional de referência</h2><p>Farmácia Escola - DCF/CCS/UFPB. Centro de Vivência, térreo, Universidade Federal da Paraíba, Campus I, Cidade Universitária, CEP 58.051-900, João Pessoa-PB. Telefone: +55 (83) 3216-7038. E-mail: equipecuidados@gmail.com. Horário de funcionamento: 08h às 12h e 13h às 17h.</p></section><section><h2>16. Contato do Comitê de Ética em Pesquisa</h2><p>Se você tiver dúvidas sobre seus direitos como participante de pesquisa, poderá entrar em contato com o Comitê de Ética em Pesquisa do Centro de Ciências da Saúde da Universidade Federal da Paraíba (CEP/CCS/UFPB), localizado no Centro de Ciências da Saúde, 1º andar, Campus I, Cidade Universitária, CEP 58.051-900, João Pessoa-PB. Telefone: +55 (83) 3216-7791. E-mail: comitedeetica@ccs.ufpb.br. Horário de funcionamento: 07h às 12h e 13h às 16h.</p></section><section><h2>17. Consentimento livre e esclarecido</h2><p>Declaro que li ou tive acesso ao presente Termo de Consentimento Livre e Esclarecido, que fui informado(a), de maneira clara e objetiva, sobre os objetivos, procedimentos, riscos, benefícios, garantias de sigilo, proteção dos dados, voluntariedade e possibilidade de desistência da pesquisa.</p>
+<p>Declaro que tive oportunidade de esclarecer dúvidas e que, ao selecionar a opção de aceite na plataforma, manifesto livremente minha concordância em participar da etapa para a qual fui convidado(a). Sei que posso salvar ou imprimir uma via deste Termo antes de iniciar a avaliação.</p></section>
+
+<div class="consent"><strong>ACEITE ELETRÔNICO</strong>
+<p>Na plataforma, o consentimento será registrado pela opção “Li o TCLE, tive oportunidade de esclarecer dúvidas e aceito participar voluntariamente desta pesquisa.”</p>
+</div>
+<div class="foot">CAAE 98814726.6.0000.5188 • Parecer 8.625.931 • TCLE v2.0 • 20 de setembro de 2026</div>
+</article></main>
+</body></html>
