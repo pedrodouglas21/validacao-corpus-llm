@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light" />
   <title>Validação Clínica do Corpus</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./styles.css?v=20260920-3" />
 </head>
 <body>
   <div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>
@@ -100,25 +100,32 @@
 
       <div class="layout">
         <article class="panel case-panel">
-          <div id="patientHero" class="patient-hero hidden">
-            <div id="patientAvatar" class="patient-avatar">🧑</div>
+          <div id="patientHero" class="patient-hero">
+            <div id="patientAvatar" class="patient-avatar" aria-hidden="true">🧑</div>
             <div class="patient-copy">
               <strong id="patientSummary">Paciente em avaliação</strong>
               <div id="patientDetails" class="patient-details"></div>
-              <p class="patient-note">Resumo visual apenas para facilitar a leitura. O identificador do caso permanece cego e não indica qualidade, prioridade ou ordem de seleção.</p>
+              <p class="patient-note">Caso clínico inteiramente sintético. A ilustração serve apenas como apoio visual e não acrescenta informação clínica ao registro.</p>
             </div>
           </div>
+
           <div class="panel-title-row">
-            <h2>Resumo clínico-farmacoterapêutico</h2>
-            <button id="fontToggle" class="ghost small" type="button">Texto maior</button>
+            <div>
+              <h2>Resumo clínico-farmacoterapêutico</h2>
+              <p class="case-language-note">Português é exibido por padrão. A versão-fonte em inglês permanece disponível para conferência.</p>
+            </div>
+            <div class="case-actions">
+              <button id="languageToggle" class="ghost small" type="button">Ver EN original</button>
+              <button id="fontToggle" class="ghost small" type="button">Texto maior</button>
+            </div>
           </div>
-          <pre id="caseText" class="case-text"></pre>
+          <div id="caseContent" class="case-content"></div>
         </article>
 
         <aside class="panel instrument-panel">
           <div class="instrument-intro">
             <h2>Instrumento de validação</h2>
-            <p>Marque a opção que melhor representa seu julgamento clínico. Para fins de validade de conteúdo, escores <strong>3 ou 4</strong> em adequação global contam como concordância para o I-CVI.</p>
+            <p>Avalie cada dimensão de acordo com o seu julgamento clínico. As respostas serão analisadas de forma agregada para a validação do corpus.</p>
           </div>
 
           <form id="evaluationForm">
@@ -189,9 +196,8 @@
 
   <footer>
     <span>Estudo metodológico • casos inteiramente sintéticos • avaliação independente</span>
-    <a href="./admin.html">Área administrativa</a>
   </footer>
 
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./app.js?v=20260920-3"></script>
 </body>
 </html>

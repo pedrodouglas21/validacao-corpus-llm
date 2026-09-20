@@ -1,46 +1,33 @@
-# Validação Clínica do Corpus — LLM-Council
+# Validação clínica do corpus — LLM-Council
 
-Aplicação estática para GitHub Pages com persistência no Supabase.
+Interface web utilizada para a validação independente de casos clínicos farmacoterapêuticos sintéticos.
 
-## O que o painel faz
+## Estrutura
 
-- acesso de especialista por código individual;
-- autenticação anônima do Supabase + código de convite de uso único;
-- aceite do TCLE antes da avaliação;
-- 85 casos em ordem individual pseudoaleatória;
-- quatro escalas de 1–4: pertinência, complexidade, representatividade e adequação global;
-- pergunta sobre incoerência/ausência impeditiva;
-- salvamento automático e retomada da sessão;
-- cálculo administrativo de I-CVI por caso;
-- monitoramento de S-CVI/Ave, progresso e alertas;
-- mapeamento `VAL ↔ CAND/CASE` protegido no banco e invisível aos especialistas.
+- `index.html`: painel do especialista
+- `app.js`: fluxo de autenticação, apresentação dos casos e salvamento
+- `styles.css`: interface
+- `config.js`: configuração pública do Supabase e do TCLE
+- `tcle.html`: TCLE em formato web
+- `TCLE_LLM_Atualizado_20-09-2026.pdf`: TCLE em PDF
+- `admin.html` / `admin.js`: painel administrativo restrito
 
-## Antes de publicar
+Os casos não ficam armazenados no repositório. Eles são recuperados do banco Supabase após autenticação válida.
 
-1. Crie um projeto Supabase.
-2. Em **Authentication > Providers**, habilite **Anonymous Sign-Ins**.
-3. Execute `supabase/schema.sql`.
-4. Execute, fora do repositório público, os scripts privados entregues separadamente:
-   - `01_seed_cases_PRIVADO.sql`
-   - `02_seed_mapeamento_interno_PRIVADO.sql`
-   - `03_seed_codigos_especialistas_PRIVADO.sql`
-5. Configure um usuário administrador e execute `04_configurar_admin_PRIVADO.sql`.
-6. Copie `config.js.example` para `config.js` e preencha:
-   - URL do projeto;
-   - chave `anon`/`publishable` do Supabase;
-   - URL e versão do TCLE aprovado.
-7. Publique no GitHub Pages.
+## Validação
 
-**Nunca coloque a `service_role` key no frontend.** A chave `anon/publishable` pode ser usada no navegador quando as políticas RLS estão corretamente configuradas.
+O painel registra, por caso:
 
-## CVI
+- pertinência farmacoterapêutica;
+- complexidade decisória;
+- representatividade clínica;
+- adequação global;
+- presença de incoerência ou ausência impeditiva;
+- motivo do impedimento, quando aplicável;
+- comentário opcional.
 
-O painel considera, para cada caso:
+O corpus é apresentado em PT-BR por padrão, com a versão-fonte em inglês disponível para conferência.
 
-`I-CVI = nº de avaliadores que marcaram 3 ou 4 em adequação global / nº de avaliações completas`.
+## Privacidade
 
-O limiar do SAP é I-CVI ≥ 0,78. O painel usa 6 avaliadores como quantidade esperada e exibe o S-CVI/Ave apenas como resumo dos casos que já atingiram a quantidade requerida de avaliações.
-
-## GitHub Pages
-
-O workflow em `.github/workflows/pages.yml` publica o conteúdo da raiz do repositório automaticamente quando houver push na branch `main`.
+Não publicar neste repositório códigos dos especialistas, mapeamentos internos dos casos ou credenciais administrativas do banco.

@@ -1,5 +1,5 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { CONFIG } from "./config.js";
+import { CONFIG } from "./config.js?v=20260920-3";
 
 const $ = (id) => document.getElementById(id);
 const views = ["loadingView","accessView","workspaceView","doneView"];
@@ -19,14 +19,35 @@ const supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
 
-const labels = {
-  1:["1","Inadequado"],
-  2:["2","Pouco adequado"],
-  3:["3","Adequado"],
-  4:["4","Muito adequado"]
+const ratingLabels = {
+  pertinence: {
+    1:["1","Não pertinente"],
+    2:["2","Pouco pertinente"],
+    3:["3","Pertinente"],
+    4:["4","Muito pertinente"]
+  },
+  complexity: {
+    1:["1","Muito baixa"],
+    2:["2","Baixa"],
+    3:["3","Moderada"],
+    4:["4","Alta"]
+  },
+  representativeness: {
+    1:["1","Não representativo"],
+    2:["2","Pouco representativo"],
+    3:["3","Representativo"],
+    4:["4","Muito representativo"]
+  },
+  global_adequacy: {
+    1:["1","Inadequado"],
+    2:["2","Pouco adequado"],
+    3:["3","Adequado"],
+    4:["4","Muito adequado"]
+  }
 };
 document.querySelectorAll(".scale").forEach(el => {
   const name = el.dataset.name;
+  const labels = ratingLabels[name];
   Object.entries(labels).forEach(([value,[n,txt]]) => {
     const label = document.createElement("label");
     label.innerHTML = `<input type="radio" name="${name}" value="${value}"><span>${n}<br>${txt}</span>`;
@@ -40,69 +61,84 @@ if (!CONFIG.CONSENT_URL || CONFIG.CONSENT_URL.includes("COLE_AQUI")) {
 }
 
 let session = null, cases = [], evaluations = new Map(), order = [], index = 0, saveTimer = null;
+let caseLanguage = localStorage.getItem("caseLanguage") === "en" ? "en" : "pt";
 
-function localizeSnapshot(snapshot){
-  if(!snapshot) return "";
-  let t = snapshot.replace(/^VAL-\d+\s*/m, "").trim();
-  const replacements = [
-    [/\bDemographics\b/g, "Dados demográficos"],
-    [/\bAge:\s*/g, "Idade: "],
-    [/\bSex:\s*Male\b/g, "Sexo: Masculino"],
-    [/\bSex:\s*Female\b/g, "Sexo: Feminino"],
-    [/\bSex:\s*Other\b/g, "Sexo: Outro"],
-    [/\bRelevant active conditions\b/g, "Condições ativas relevantes"],
-    [/\bCurrent medications\b/g, "Medicamentos em uso"],
-    [/\bRelevant medications\b/g, "Medicamentos relevantes"],
-    [/\bAllergies\b/g, "Alergias"],
-    [/\bVitals\b/g, "Sinais vitais"],
-    [/\bKey labs\b/g, "Exames laboratoriais relevantes"],
-    [/\bKey recent laboratory data\b/g, "Dados laboratoriais recentes relevantes"],
-    [/\bLaboratory data\b/g, "Dados laboratoriais"],
-    [/\bRenal function\b/g, "Função renal"],
-    [/\bHepatic function\b/g, "Função hepática"],
-    [/\bClinical context\b/g, "Contexto clínico"],
-    [/\bClinical focus\b/g, "Foco clínico"],
-    [/\bMedication-related concerns\b/g, "Pontos farmacoterapêuticos relevantes"],
-    [/\bProblem list\b/g, "Lista de problemas"],
-    [/\bPast medical history\b/g, "Histórico clínico pregresso"],
-    [/\bRecent events\b/g, "Eventos recentes"],
-    [/\bChief concern\b/g, "Queixa principal"],
-    [/\bAssessment target\b/g, "Alvo de avaliação"],
-    [/\bOther relevant information\b/g, "Outras informações relevantes"],
-    [/\bMale\b/g, "Masculino"],
-    [/\bFemale\b/g, "Feminino"]
-  ];
-  replacements.forEach(([pattern, repl]) => { t = t.replace(pattern, repl); });
-  return t;
+const SECTION_ICONS = {
+  "DADOS DO PACIENTE":"👤","DEMOGRAPHICS":"👤",
+  "CONDIÇÕES CLÍNICAS ATIVAS":"🩺","RELEVANT ACTIVE CONDITIONS":"🩺",
+  "MEDICAMENTOS EM USO":"💊","CURRENT MEDICATIONS":"💊",
+  "ALERGIAS E INTOLERÂNCIAS":"⚠️","ALLERGIES/INTOLERANCES":"⚠️",
+  "EVENTOS CLÍNICOS RECENTES":"🗓️","RECENT CLINICAL COURSE":"🗓️",
+  "EXAMES LABORATORIAIS E SINAIS VITAIS RELEVANTES":"🧪","RELEVANT LABORATORY AND VITAL DATA":"🧪",
+  "TAREFA CLÍNICA":"🎯","TASK":"🎯"
+};
+const PT_HEADINGS = ["DADOS DO PACIENTE","CONDIÇÕES CLÍNICAS ATIVAS","MEDICAMENTOS EM USO","ALERGIAS E INTOLERÂNCIAS","EVENTOS CLÍNICOS RECENTES","EXAMES LABORATORIAIS E SINAIS VITAIS RELEVANTES","TAREFA CLÍNICA"];
+const EN_HEADINGS = ["Demographics","Relevant active conditions","Current medications","Allergies/intolerances","Recent clinical course","Relevant laboratory and vital data","Task"];
+
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[ch]));
 }
-
-function parsePatientMeta(snapshot){
-  const ageMatch = snapshot?.match(/Age:\s*(\d+)/i);
-  const sexMatch = snapshot?.match(/Sex:\s*([A-Za-z]+)/i);
-  const age = ageMatch ? Number(ageMatch[1]) : null;
-  const sexRaw = sexMatch ? sexMatch[1].toLowerCase() : null;
-  const sex = sexRaw === "male" ? "Masculino" : sexRaw === "female" ? "Feminino" : sexRaw ? sexRaw : null;
-  return { age, sex };
+function parseMeta(snapshot){
+  const age = snapshot?.match(/Age:\s*(\d+)/i)?.[1] || snapshot?.match(/Idade:\s*(\d+)/i)?.[1] || null;
+  const rawSex = snapshot?.match(/Sex:\s*([^\n]+)/i)?.[1] || snapshot?.match(/Sexo:\s*([^\n]+)/i)?.[1] || null;
+  const sex = rawSex ? rawSex.trim() : null;
+  return {age: age ? Number(age) : null, sex};
 }
-
-function avatarFor(meta){
-  const age = meta?.age;
-  const sex = meta?.sex;
-  if (age !== null && age >= 60) return sex === "Feminino" ? "👵" : sex === "Masculino" ? "👴" : "🧓";
-  if (age !== null && age < 18) return sex === "Feminino" ? "👧" : sex === "Masculino" ? "👦" : "🧒";
-  return sex === "Feminino" ? "👩" : sex === "Masculino" ? "👨" : "🧑";
+function avatarFor({age,sex}){
+  const s=(sex||"").toLowerCase();
+  const female=s.includes("female")||s.includes("femin");
+  const male=s.includes("male")||s.includes("mascul");
+  if(age!==null && age>=60) return female?"👵":male?"👴":"🧓";
+  if(age!==null && age<18) return female?"👧":male?"👦":"🧒";
+  return female?"👩":male?"👨":"🧑";
 }
-
-function renderPatientHero(snapshot){
-  const meta = parsePatientMeta(snapshot);
-  $("patientHero").classList.remove("hidden");
-  $("patientAvatar").textContent = avatarFor(meta);
-  $("patientSummary").textContent = meta.age !== null ? `Paciente de ${meta.age} anos` : "Paciente em avaliação";
-  const chips = [];
-  if (meta.age !== null) chips.push(`<span class="patient-chip">${meta.age} anos</span>`);
-  if (meta.sex) chips.push(`<span class="patient-chip">${meta.sex}</span>`);
-  chips.push(`<span class="patient-chip">Caso clínico sintético</span>`);
-  $("patientDetails").innerHTML = chips.join("");
+function renderPatientHero(c){
+  const meta=parseMeta(c.snapshot);
+  $("patientAvatar").textContent=avatarFor(meta);
+  $("patientSummary").textContent=meta.age!==null ? `Paciente de ${meta.age} anos` : "Paciente em avaliação";
+  const chips=[];
+  if(meta.age!==null) chips.push(`<span class="patient-chip">${meta.age} anos</span>`);
+  if(meta.sex){
+    const sexpt=/female/i.test(meta.sex)?"Feminino":/male/i.test(meta.sex)?"Masculino":meta.sex;
+    chips.push(`<span class="patient-chip">${esc(sexpt)}</span>`);
+  }
+  chips.push(`<span class="patient-chip">Caso sintético</span>`);
+  $("patientDetails").innerHTML=chips.join("");
+}
+function renderStructuredSnapshot(text, lang){
+  const headings = lang==="pt" ? PT_HEADINGS : EN_HEADINGS;
+  const lines=(text||"").split(/\r?\n/);
+  if(lines.length && /^VAL-\d+/.test(lines[0].trim())) lines.shift();
+  const sections=[]; let current=null;
+  for(const raw of lines){
+    const s=raw.trim();
+    if(!s) continue;
+    const heading=headings.find(h=>h.toLowerCase()===s.toLowerCase());
+    if(heading){current={title:heading,items:[]};sections.push(current);continue;}
+    if(!current){current={title:lang==="pt"?"INFORMAÇÕES DO CASO":"CASE INFORMATION",items:[]};sections.push(current);}
+    current.items.push(s);
+  }
+  $("caseContent").innerHTML=sections.map(sec=>{
+    const key=sec.title.toUpperCase();
+    const icon=SECTION_ICONS[key]||"•";
+    const isDemo=/DADOS DO PACIENTE|DEMOGRAPHICS/i.test(sec.title);
+    const isTask=/TAREFA CLÍNICA|TASK/i.test(sec.title);
+    let body="";
+    if(isDemo){
+      body=`<div class="case-demographics">${sec.items.map(x=>{
+        const i=x.indexOf(":"); const k=i>=0?x.slice(0,i):""; const v=i>=0?x.slice(i+1).trim():x;
+        return `<div class="demo-item"><strong>${esc(k)}</strong>${esc(v)}</div>`;
+      }).join("")}</div>`;
+    }else if(isTask){
+      body=`<div>${sec.items.map(x=>esc(x.replace(/^[-•]\s*/,""))).join(" ")}</div>`;
+    }else{
+      body=`<ul>${sec.items.map(x=>`<li>${esc(x.replace(/^[-•]\s*/,""))}</li>`).join("")}</ul>`;
+    }
+    return `<section class="case-section ${isTask?"case-task":""}"><h3 class="case-section-title"><span>${icon}</span>${esc(sec.title)}</h3><div class="case-section-body">${body}</div></section>`;
+  }).join("");
+}
+function updateLanguageButton(){
+  $("languageToggle").textContent = caseLanguage==="pt" ? "Ver EN original" : "Ver PT-BR";
 }
 
 function seededRank(uid, code) {
@@ -168,10 +204,12 @@ function renderCase(){
   const c = getCurrent();
   if (!c) return;
   $("caseTitle").textContent = "Caso clínico em avaliação";
-  $("caseMeta").textContent = `Caso ${index+1} de ${order.length} • ordem individual randomizada`;
-  $("caseBlindId").textContent = `Identificador cego do caso: ${c.case_code}`;
-  renderPatientHero(c.snapshot);
-  $("caseText").textContent = localizeSnapshot(c.snapshot);
+  $("caseMeta").textContent = `Posição ${index+1} de ${order.length} na sua sequência de avaliação`;
+  $("caseBlindId").textContent = `Código interno do caso: ${c.case_code} • não corresponde à ordem de apresentação`;
+  renderPatientHero(c);
+  const text = caseLanguage==="pt" && c.snapshot_ptbr ? c.snapshot_ptbr : c.snapshot;
+  renderStructuredSnapshot(text, caseLanguage);
+  updateLanguageButton();
   populateForm(evaluations.get(c.id));
   $("prevBtn").disabled = index === 0;
   $("nextBtn").textContent = index === order.length-1 ? "Concluir →" : "Próximo →";
@@ -205,7 +243,7 @@ function scheduleSave(){
 }
 async function loadWorkspace(){
   const [{data:caseData,error:caseError},{data:evalData,error:evalError}] = await Promise.all([
-    supabase.from("cases").select("id,case_code,snapshot").eq("active",true).order("case_code"),
+    supabase.from("cases").select("id,case_code,snapshot,snapshot_ptbr").eq("active",true).order("case_code"),
     supabase.from("evaluations").select("*").eq("evaluator_id",session.user.id)
   ]);
   if(caseError) throw caseError; if(evalError) throw evalError;
@@ -297,8 +335,13 @@ $("nextBtn").addEventListener("click",async()=>{
   }else{index++;renderCase();}
 });
 $("fontToggle").addEventListener("click",()=>{
-  $("caseText").classList.toggle("large");
-  $("fontToggle").textContent=$("caseText").classList.contains("large")?"Texto normal":"Texto maior";
+  $("caseContent").classList.toggle("large");
+  $("fontToggle").textContent=$("caseContent").classList.contains("large")?"Texto normal":"Texto maior";
+});
+$("languageToggle").addEventListener("click",()=>{
+  caseLanguage = caseLanguage==="pt" ? "en" : "pt";
+  localStorage.setItem("caseLanguage", caseLanguage);
+  renderCase();
 });
 $("reviewBtn").addEventListener("click",()=>{show("workspaceView");index=0;renderCase();});
 bootstrap();
