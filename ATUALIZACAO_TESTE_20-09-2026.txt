@@ -1,0 +1,20 @@
+ATUALIZAÇÃO PARA TESTE TÉCNICO DO DASHBOARD
+
+Arquivos que precisam substituir os atuais no GitHub:
+- index.html
+- config.js
+- tcle.html
+- TCLE_LLM_Atualizado_20-09-2026.pdf
+- app.js
+
+Principais alterações:
+- coleta habilitada (COLLECTION_ENABLED: true);
+- TCLE sem identificação visual de versão;
+- metadado interno do consentimento: TCLE-2026-09-20;
+- link do TCLE na tela inicial com redação mais natural;
+- PDF referenciado pelo HTML atualizado.
+
+Código temporário já cadastrado no Supabase:
+TESTE-LLM-2026
+
+Após o teste, remover os registros de teste antes da coleta oficial.
