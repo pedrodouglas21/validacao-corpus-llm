@@ -23,14 +23,23 @@ async function load(){
   const ok=await isAdmin();
   if(!ok){$("adminLogin").classList.remove("hidden");$("adminView").classList.add("hidden");return;}
   $("adminLogin").classList.add("hidden");$("adminView").classList.remove("hidden");
-  const [{data:caseRows,error:e1},{data:profiles,error:e2},{data:evals,error:e3}] = await Promise.all([
+  const [{data:caseRows,error:e1},{data:profiles,error:e2},{data:evals,error:e3},{data:codes,error:e4}] = await Promise.all([
     supabase.from("v_admin_case_status").select("*").order("case_code"),
-    supabase.from("evaluator_profiles").select("user_id,professional_area,highest_degree,years_experience,consented_at"),
-    supabase.from("evaluations").select("evaluator_id,is_complete")
+    supabase.from("evaluator_profiles").select("user_id,code_id,professional_area,highest_degree,years_experience,consented_at"),
+    supabase.from("evaluations").select("evaluator_id,is_complete"),
+    supabase.from("evaluator_codes").select("id,label")
   ]);
-  if(e1||e2||e3) throw e1||e2||e3;
+  if(e1||e2||e3||e4) throw e1||e2||e3||e4;
   rows=caseRows||[];
-  const complete=(evals||[]).filter(x=>x.is_complete);
+  // Chaves técnicas ficam preservadas para auditoria, mas não entram nos indicadores oficiais.
+  const technicalCodeIds=new Set((codes||[])
+    .filter(c=>String(c.label||"").trim().toUpperCase().startsWith("TESTE"))
+    .map(c=>c.id));
+  const technicalUserIds=new Set((profiles||[])
+    .filter(p=>technicalCodeIds.has(p.code_id))
+    .map(p=>p.user_id));
+  const officialProfiles=(profiles||[]).filter(p=>!technicalUserIds.has(p.user_id));
+  const complete=(evals||[]).filter(x=>x.is_complete&&!technicalUserIds.has(x.evaluator_id));
   const primary=rows.filter(x=>x.proposed_role==="primary");
   const fully=primary.filter(x=>Number(x.n_ratings)===CONFIG.REQUIRED_RATERS);
   // Só divulga o índice final com os 80 casos principais completos; usa frações sem arredondar.
@@ -51,7 +60,7 @@ async function load(){
 
   const counts=new Map();
   complete.forEach(e=>counts.set(e.evaluator_id,(counts.get(e.evaluator_id)||0)+1));
-  $("evaluatorGrid").innerHTML=(profiles||[]).map((p,i)=>`<div class="evaluator-card">
+  $("evaluatorGrid").innerHTML=officialProfiles.map((p,i)=>`<div class="evaluator-card">
     <strong>Especialista ${i+1}</strong>
     <span>${esc(p.professional_area||"Área não informada")}</span>
     <div class="progress-track"><div class="progress-bar" style="width:${100*(counts.get(p.user_id)||0)/rows.length}%"></div></div>
