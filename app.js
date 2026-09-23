@@ -1,5 +1,5 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/+esm";
-import { CONFIG } from "./config.js?v=20260920-3";
+import { CONFIG } from "./config.js?v=20260923-1";
 
 const $ = (id) => document.getElementById(id);
 const views = ["loadingView","accessView","workspaceView","doneView"];
