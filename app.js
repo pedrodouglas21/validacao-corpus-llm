@@ -1,4 +1,4 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/+esm";
 import { CONFIG } from "./config.js?v=20260920-3";
 
 const $ = (id) => document.getElementById(id);
@@ -61,6 +61,7 @@ if (!CONFIG.CONSENT_URL || CONFIG.CONSENT_URL.includes("COLE_AQUI")) {
 }
 
 let session = null, cases = [], evaluations = new Map(), order = [], index = 0, saveTimer = null;
+let saveQueue = Promise.resolve(), formRevision = 0;
 let caseLanguage = localStorage.getItem("caseLanguage") === "en" ? "en" : "pt";
 
 const SECTION_ICONS = {
@@ -141,6 +142,7 @@ function updateLanguageButton(){
   $("languageToggle").textContent = caseLanguage==="pt" ? "Ver EN original" : "Ver PT-BR";
 }
 
+// A ordem é reprodutível por avaliador. Não se afirma aleatorização uniforme.
 function seededRank(uid, code) {
   let h = 2166136261;
   const s = uid + "|" + code;
@@ -157,7 +159,8 @@ function formValue(name){
 }
 function isCompleteData(d){
   return [d.pertinence,d.complexity,d.representativeness,d.global_adequacy].every(v=>[1,2,3,4].includes(v))
-    && typeof d.blocking_issue === "boolean";
+    && typeof d.blocking_issue === "boolean"
+    && (d.blocking_issue !== true || Boolean(d.blocker_reason?.trim()));
 }
 function readForm(){
   const b = document.querySelector('input[name="blocking_issue"]:checked');
@@ -200,7 +203,7 @@ function progress(){
   $("progressBar").style.width = `${cases.length ? 100*done/cases.length : 0}%`;
   return done;
 }
-function renderCase(){
+function renderCase({preserveForm=false}={}){
   const c = getCurrent();
   if (!c) return;
   $("caseTitle").textContent = "Caso clínico em avaliação";
@@ -210,38 +213,55 @@ function renderCase(){
   const text = caseLanguage==="pt" && c.snapshot_ptbr ? c.snapshot_ptbr : c.snapshot;
   renderStructuredSnapshot(text, caseLanguage);
   updateLanguageButton();
-  populateForm(evaluations.get(c.id));
+  if (!preserveForm) populateForm(evaluations.get(c.id));
   $("prevBtn").disabled = index === 0;
   $("nextBtn").textContent = index === order.length-1 ? "Concluir →" : "Próximo →";
-  $("saveState").textContent = evaluations.get(c.id)?.is_complete ? "Resposta salva." : "As alterações serão salvas automaticamente.";
-  $("saveState").className = "save-state";
-  window.scrollTo({top:0,behavior:"smooth"});
+  if (!preserveForm) {
+    $("saveState").textContent = evaluations.get(c.id)?.is_complete ? "Resposta salva." : "As alterações serão salvas automaticamente.";
+    $("saveState").className = "save-state";
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
 }
 async function saveCurrent({force=false}={}){
+  clearTimeout(saveTimer);
+  saveTimer=null;
   const c = getCurrent(); if(!c || !session) return false;
+  if (!COLLECTION_ENABLED) {
+    $("saveState").textContent="A coleta está fechada; nenhuma resposta foi enviada.";
+    $("saveState").className="save-state error";
+    return false;
+  }
   const d = readForm();
   if (!force && !Object.values(d).some(v=>v!==null && v!==false && v!=="")) return false;
+  const revision=formRevision;
   $("saveState").textContent = "Salvando…"; $("saveState").className = "save-state saving";
   const payload = {
     evaluator_id: session.user.id, case_id: c.id, ...d,
     saved_at: new Date().toISOString(),
     completed_at: d.is_complete ? new Date().toISOString() : null
   };
-  const {data,error} = await supabase.from("evaluations").upsert(payload,{onConflict:"evaluator_id,case_id"}).select().single();
+  // Serializa gravações, inclusive as iniciadas pelo autosave e pela navegação.
+  const request=saveQueue.then(()=>supabase.from("evaluations").upsert(payload,{onConflict:"evaluator_id,case_id"}).select().single());
+  saveQueue=request.then(()=>undefined,()=>undefined);
+  const {data,error} = await request;
   if(error){
-    $("saveState").textContent = "Não foi possível salvar. Verifique sua conexão."; $("saveState").className="save-state error";
+    if(getCurrent()?.id===c.id){$("saveState").textContent = "Não foi possível salvar. Verifique sua conexão ou se a coleta está aberta."; $("saveState").className="save-state error";}
     console.error(error); return false;
   }
   evaluations.set(c.id,data);
-  $("saveState").textContent = d.is_complete ? "Resposta salva." : "Rascunho salvo — complete todos os campos.";
-  $("saveState").className = "save-state saved";
+  if(getCurrent()?.id===c.id && revision===formRevision){
+    $("saveState").textContent = d.is_complete ? "Resposta salva." : "Rascunho salvo — complete todos os campos.";
+    $("saveState").className = "save-state saved";
+  }
   progress(); return true;
 }
 function scheduleSave(){
+  formRevision++;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(()=>saveCurrent(),450);
 }
 async function loadWorkspace(){
+  if (!COLLECTION_ENABLED) {show("accessView");return;}
   const [{data:caseData,error:caseError},{data:evalData,error:evalError}] = await Promise.all([
     supabase.from("cases").select("id,case_code,snapshot,snapshot_ptbr").eq("active",true).order("case_code"),
     supabase.from("evaluations").select("*").eq("evaluator_id",session.user.id)
@@ -261,6 +281,7 @@ async function bootstrap(){
       show("accessView");
       $("accessMessage").textContent = "TCLE disponível para leitura. A coleta ainda não foi habilitada.";
       $("accessMessage").className = "message error span-2";
+      return;
     }
     const {data:{session:s}} = await supabase.auth.getSession();
     session = s;
@@ -317,14 +338,15 @@ $("accessForm").addEventListener("submit", async e=>{
 });
 $("evaluationForm").addEventListener("change",()=>{syncBlocker();scheduleSave();});
 $("comment").addEventListener("input",scheduleSave);
-$("prevBtn").addEventListener("click",async()=>{await saveCurrent({force:true}); if(index>0){index--;renderCase();}});
+$("blockerReason").addEventListener("input",scheduleSave);
+$("prevBtn").addEventListener("click",async()=>{if(await saveCurrent({force:true}) && index>0){index--;renderCase();}});
 $("nextBtn").addEventListener("click",async()=>{
   const d=readForm();
   if(!d.is_complete){
     $("saveState").textContent="Complete os quatro escores e a pergunta de impedimento antes de avançar.";
     $("saveState").className="save-state error"; return;
   }
-  if(d.blocking_issue && !$("blockerReason").value){
+  if(d.blocking_issue && !$("blockerReason").value.trim()){
     $("saveState").textContent="Selecione o motivo do impedimento.";
     $("saveState").className="save-state error"; return;
   }
@@ -341,7 +363,7 @@ $("fontToggle").addEventListener("click",()=>{
 $("languageToggle").addEventListener("click",()=>{
   caseLanguage = caseLanguage==="pt" ? "en" : "pt";
   localStorage.setItem("caseLanguage", caseLanguage);
-  renderCase();
+  renderCase({preserveForm:true});
 });
 $("reviewBtn").addEventListener("click",()=>{show("workspaceView");index=0;renderCase();});
 bootstrap();
