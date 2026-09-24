@@ -10,10 +10,14 @@ let rows=[];
 function esc(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[ch]));}
 function badge(status){const safe=["PENDENTE","APTO","APTO_CVI_COM_ALERTA","REVISAR"].includes(status)?status:"PENDENTE";return `<span class="status ${safe}">${safe.replaceAll("_"," ")}</span>`}
 function fmt(x,d=3){return x===null||x===undefined?"—":Number(x).toFixed(d)}
-function csvEscape(v){const s=v==null?"":String(v);return /[",\n]/.test(s)?`"${s.replaceAll('"','""')}"`:s}
+function csvEscape(v){
+  const s=v==null?"":typeof v==="number"?String(v).replace(".",","):String(v);
+  return /[";\r\n]/.test(s)?`"${s.replaceAll('"','""')}"`:s;
+}
 function downloadCsv(data){
   const cols=["case_code","proposed_role","backup_rank","n_ratings","i_cvi","mean_pertinence","mean_complexity","mean_representativeness","mean_global_adequacy","blocking_flags","status","source_candidate_id","original_case_id"];
-  const csv=[cols.join(","),...data.map(r=>cols.map(c=>csvEscape(r[c])).join(","))].join("\n");
+  // Excel em português: uma coluna por campo e vírgula como separador decimal.
+  const csv=[cols.join(";"),...data.map(r=>cols.map(c=>csvEscape(r[c])).join(";"))].join("\r\n")+"\r\n";
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}));a.download="validacao_corpus_resultados.csv";a.click();URL.revokeObjectURL(a.href);
 }
 async function isAdmin(){
