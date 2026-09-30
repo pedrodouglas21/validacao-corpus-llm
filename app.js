@@ -1,4 +1,4 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/+esm";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/+esm";
 import { CONFIG } from "./config.js?v=20260923-1";
 
 const $ = (id) => document.getElementById(id);
@@ -15,8 +15,21 @@ if (!CONFIG.SUPABASE_URL || CONFIG.SUPABASE_URL.includes("SEU-PROJETO") ||
 
 const COLLECTION_ENABLED = CONFIG.COLLECTION_ENABLED === true;
 
+let session = null;
+
 const supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+});
+
+// Cliente de dados explicitamente vinculado ao JWT da sessão atual.
+// Isso evita que chamadas ao PostgREST caiam no papel "anon" usando apenas a publishable key.
+const dataClient = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  accessToken: async () => session?.access_token ?? null
+});
+
+supabase.auth.onAuthStateChange((_event, nextSession) => {
+  session = nextSession;
 });
 
 const ratingLabels = {
@@ -60,7 +73,7 @@ if (!CONFIG.CONSENT_URL || CONFIG.CONSENT_URL.includes("COLE_AQUI")) {
   $("consentLink").addEventListener("click", e => e.preventDefault());
 }
 
-let session = null, cases = [], evaluations = new Map(), order = [], index = 0, saveTimer = null;
+let cases = [], evaluations = new Map(), order = [], index = 0, saveTimer = null;
 let saveQueue = Promise.resolve(), formRevision = 0;
 let caseLanguage = localStorage.getItem("caseLanguage") === "en" ? "en" : "pt";
 
@@ -241,7 +254,7 @@ async function saveCurrent({force=false}={}){
     completed_at: d.is_complete ? new Date().toISOString() : null
   };
   // Serializa gravações, inclusive as iniciadas pelo autosave e pela navegação.
-  const request=saveQueue.then(()=>supabase.from("evaluations").upsert(payload,{onConflict:"evaluator_id,case_id"}).select().single());
+  const request=saveQueue.then(()=>dataClient.from("evaluations").upsert(payload,{onConflict:"evaluator_id,case_id"}).select().single());
   saveQueue=request.then(()=>undefined,()=>undefined);
   const {data,error} = await request;
   if(error){
@@ -263,8 +276,8 @@ function scheduleSave(){
 async function loadWorkspace(){
   if (!COLLECTION_ENABLED) {show("accessView");return;}
   const [{data:caseData,error:caseError},{data:evalData,error:evalError}] = await Promise.all([
-    supabase.from("cases").select("id,case_code,snapshot,snapshot_ptbr").eq("active",true).order("case_code"),
-    supabase.from("evaluations").select("*").eq("evaluator_id",session.user.id)
+    dataClient.from("cases").select("id,case_code,snapshot,snapshot_ptbr").eq("active",true).order("case_code"),
+    dataClient.from("evaluations").select("*").eq("evaluator_id",session.user.id)
   ]);
   if(caseError) throw caseError; if(evalError) throw evalError;
   cases = caseData || []; evaluations = new Map((evalData||[]).map(x=>[x.case_id,x]));
@@ -288,7 +301,7 @@ async function bootstrap(){
     if (!session){
       show("accessView"); return;
     }
-    const {data:ok,error} = await supabase.rpc("my_access_ok");
+    const {data:ok,error} = await dataClient.rpc("my_access_ok");
     if(error || !ok){ show("accessView"); return; }
     $("sessionBadge").textContent = "Sessão protegida";
     $("sessionBadge").classList.remove("hidden");
@@ -315,11 +328,22 @@ $("accessForm").addEventListener("submit", async e=>{
     let {data:{session:s}} = await supabase.auth.getSession();
     if(!s){
       const {data,error}=await supabase.auth.signInAnonymously();
-      if(error) throw error; s=data.session;
+      if(error) throw error;
+      if(!data?.session?.access_token || !data?.session?.refresh_token) {
+        throw new Error("Não foi possível estabelecer a sessão segura. Recarregue a página e tente novamente.");
+      }
+      const firstSession=data.session;
+      const {data:confirmed,error:sessionError}=await supabase.auth.setSession({
+        access_token:firstSession.access_token,
+        refresh_token:firstSession.refresh_token
+      });
+      if(sessionError) throw sessionError;
+      s=confirmed?.session || firstSession;
     }
+    if(!s?.access_token) throw new Error("Sessão segura indisponível. Recarregue a página e tente novamente.");
     session=s;
     const years = Number($("yearsExperience").value);
-    const {data,error} = await supabase.rpc("claim_evaluator_code",{
+    const {data,error} = await dataClient.rpc("claim_evaluator_code",{
       p_code:$("accessCode").value,
       p_professional_area:$("professionalArea").value,
       p_highest_degree:$("highestDegree").value,
