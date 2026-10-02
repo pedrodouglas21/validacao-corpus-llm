@@ -160,4 +160,5 @@ END;
 $function$;
 
 REVOKE ALL ON FUNCTION public.resume_evaluator_code(text,text,text,integer,text) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.resume_evaluator_code(text,text,text,integer,text) FROM anon;
 GRANT EXECUTE ON FUNCTION public.resume_evaluator_code(text,text,text,integer,text) TO authenticated;
