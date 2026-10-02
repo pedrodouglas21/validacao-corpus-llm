@@ -342,17 +342,30 @@ $("accessForm").addEventListener("submit", async e=>{
     }
     if(!s?.access_token) throw new Error("Sessão segura indisponível. Recarregue a página e tente novamente.");
     session=s;
-    const years = Number($("yearsExperience").value);
-    const {data,error} = await dataClient.rpc("claim_evaluator_code",{
+    const claimArgs = {
       p_code:$("accessCode").value,
       p_professional_area:$("professionalArea").value,
       p_highest_degree:$("highestDegree").value,
-      p_years_experience:years,
+      p_years_experience:Number($("yearsExperience").value),
       p_consent_version:CONFIG.CONSENT_VERSION
-    });
+    };
+    let {data,error} = await dataClient.rpc("claim_evaluator_code",claimArgs);
     if(error) throw error;
+
+    // Se o navegador perdeu a sessão original, o código já estará reivindicado.
+    // A recuperação exige os mesmos dados cadastrais e move as respostas preservadas
+    // para esta nova sessão anônima, uma única vez.
+    if(!data?.ok && /já utilizado|já utilizada/i.test(data?.message || "")){
+      const recovery = await dataClient.rpc("resume_evaluator_code",claimArgs);
+      if(recovery.error) throw recovery.error;
+      data = recovery.data;
+    }
+
     if(!data?.ok) throw new Error(data?.message || "Código inválido.");
-    $("accessMessage").textContent="Acesso validado."; $("accessMessage").className="message ok span-2";
+    $("accessMessage").textContent = data.recovered
+      ? "Sessão recuperada; suas respostas anteriores foram preservadas."
+      : "Acesso validado.";
+    $("accessMessage").className="message ok span-2";
     await loadWorkspace();
   }catch(err){
     console.error(err);
