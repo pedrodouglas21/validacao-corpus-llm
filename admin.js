@@ -42,7 +42,12 @@ async function load(){
   const technicalUserIds=new Set((profiles||[])
     .filter(p=>technicalCodeIds.has(p.code_id))
     .map(p=>p.user_id));
-  const officialProfiles=(profiles||[]).filter(p=>!technicalUserIds.has(p.user_id));
+  const codeById=new Map((codes||[]).map(c=>[c.id,c]));
+  // A identificação deve vir do código; a ordem de retorno das linhas pode mudar.
+  const labelFor=p=>codeById.get(p.code_id)?.label || "Especialista sem código";
+  const officialProfiles=(profiles||[])
+    .filter(p=>!technicalUserIds.has(p.user_id))
+    .sort((a,b)=>labelFor(a).localeCompare(labelFor(b),"pt-BR",{numeric:true}));
   const complete=(evals||[]).filter(x=>x.is_complete&&!technicalUserIds.has(x.evaluator_id));
   const primary=rows.filter(x=>x.proposed_role==="primary");
   const fully=primary.filter(x=>Number(x.n_ratings)===CONFIG.REQUIRED_RATERS);
@@ -64,9 +69,10 @@ async function load(){
 
   const counts=new Map();
   complete.forEach(e=>counts.set(e.evaluator_id,(counts.get(e.evaluator_id)||0)+1));
-  $("evaluatorGrid").innerHTML=officialProfiles.map((p,i)=>`<div class="evaluator-card">
-    <strong>Especialista ${i+1}</strong>
+  $("evaluatorGrid").innerHTML=officialProfiles.map(p=>`<div class="evaluator-card">
+    <strong>${esc(labelFor(p))}</strong>
     <span>${esc(p.professional_area||"Área não informada")}</span>
+    <span>${esc(p.highest_degree||"Titulação não informada")}${p.years_experience==null?"":` • ${Number(p.years_experience)} anos de experiência`}</span>
     <div class="progress-track"><div class="progress-bar" style="width:${100*(counts.get(p.user_id)||0)/rows.length}%"></div></div>
     <span>${counts.get(p.user_id)||0} / ${rows.length} casos completos</span>
   </div>`).join("");
