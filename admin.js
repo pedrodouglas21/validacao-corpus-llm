@@ -1,15 +1,15 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/+esm";
 import { CONFIG } from "./config.js";
 import {
-  SUMMARY_COLUMNS, COMPLETE_COLUMNS, CASE_EXPORT_FIELDS, EVALUATION_EXPORT_FIELDS,
-  PROFILE_EXPORT_FIELDS, buildCompleteRows, fetchExportRows, isTechnicalCode, makeCsv
-} from "./admin-export.js";
+  COMPLETE_COLUMNS, CASE_EXPORT_FIELDS, EVALUATION_EXPORT_FIELDS, PROFILE_EXPORT_FIELDS,
+  buildCaseSummaryWithComments, buildCompleteRows, fetchExportRows, isTechnicalCode, makeCsv
+} from "./admin-export.js?v=20261126-2";
 const $ = id => document.getElementById(id);
 
 if (!CONFIG.SUPABASE_URL || CONFIG.SUPABASE_URL.includes("SEU-PROJETO")) throw new Error("Configure config.js");
 const supabase=createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY,{auth:{persistSession:true,detectSessionInUrl:true}});
 
-let rows=[];
+let exporting=false;
 
 function esc(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[ch]));}
 function badge(status){const safe=["PENDENTE","APTO","APTO_CVI_COM_ALERTA","REVISAR"].includes(status)?status:"PENDENTE";return `<span class="status ${safe}">${safe.replaceAll("_"," ")}</span>`}
@@ -27,11 +27,15 @@ function downloadCsv(data, columns, filename){
 async function isAdmin(){
   const {data,error}=await supabase.rpc("is_admin"); if(error)return false; return !!data;
 }
-async function exportComplete(){
-  const button=$("exportBtn"), message=$("exportMessage");
-  button.disabled=true;
+async function exportCsv(mode){
+  if(exporting) return;
+  exporting=true;
+  const buttons=[$("exportSummaryBtn"),$("exportBtn")];
+  const message=$("exportMessage");
+  const perCase=mode==="case";
+  buttons.forEach(button=>{button.disabled=true;});
   message.className="message export-message";
-  message.textContent="Preparando o CSV completo…";
+  message.textContent=perCase?"Preparando o CSV por caso…":"Preparando o CSV detalhado…";
   try{
     if(!await isAdmin()) throw new Error("Acesso administrativo necessário.");
     const [cases,profiles,evaluations,codes]=await Promise.all([
@@ -41,20 +45,26 @@ async function exportComplete(){
       fetchExportRows(supabase,"evaluator_codes","id,label,active","id")
     ]);
     const detail=buildCompleteRows(cases,profiles,codes,evaluations,new Date().toISOString());
-    downloadCsv(detail,COMPLETE_COLUMNS,"validacao_corpus_completo.csv");
+    if(perCase){
+      const summary=buildCaseSummaryWithComments(cases,detail);
+      downloadCsv(summary.rows,summary.columns,"validacao_corpus_resultados.csv");
+    }else{
+      downloadCsv(detail,COMPLETE_COLUMNS,"validacao_corpus_completo.csv");
+    }
     message.classList.add("ok");
-    message.textContent=`CSV completo gerado: ${detail.length} linhas de dados.`;
+    message.textContent=perCase?`CSV por caso gerado: ${cases.length} casos.`:`CSV detalhado gerado: ${detail.length} linhas de dados.`;
   }catch(error){
     message.classList.add("error");
-    message.textContent="Não foi possível exportar o CSV completo. Atualize a página e tente novamente.";
-    console.error("Falha na exportação completa:",error.message);
+    message.textContent="Não foi possível exportar o CSV. Atualize a página e tente novamente.";
+    console.error("Falha na exportação:",error.message);
   }finally{
-    button.disabled=false;
+    exporting=false;
+    buttons.forEach(button=>{button.disabled=false;});
   }
 }
 async function load(){
   const ok=await isAdmin();
-  if(!ok){rows=[];$("exportSummaryBtn").disabled=true;$("adminLogin").classList.remove("hidden");$("adminView").classList.add("hidden");return;}
+  if(!ok){$("adminLogin").classList.remove("hidden");$("adminView").classList.add("hidden");return;}
   $("adminLogin").classList.add("hidden");$("adminView").classList.remove("hidden");
   const [{data:caseRows,error:e1},{data:profiles,error:e2},{data:evals,error:e3},{data:codes,error:e4}] = await Promise.all([
     supabase.from("v_admin_case_status").select("*").order("case_code"),
@@ -63,8 +73,7 @@ async function load(){
     supabase.from("evaluator_codes").select("id,label")
   ]);
   if(e1||e2||e3||e4) throw e1||e2||e3||e4;
-  rows=caseRows||[];
-  $("exportSummaryBtn").disabled=!rows.length;
+  const rows=caseRows||[];
   // Chaves técnicas ficam preservadas para auditoria, mas não entram nos indicadores oficiais.
   const technicalCodeIds=new Set((codes||[])
     .filter(isTechnicalCode)
@@ -116,7 +125,7 @@ $("adminLoginForm").addEventListener("submit",async e=>{
   $("adminLoginMessage").className=error?"message error span-2":"message ok span-2";
 });
 $("logoutBtn").addEventListener("click",async()=>{await supabase.auth.signOut();location.reload();});
-$("exportBtn").addEventListener("click",exportComplete);
-$("exportSummaryBtn").addEventListener("click",()=>downloadCsv(rows,SUMMARY_COLUMNS,"validacao_corpus_resultados.csv"));
+$("exportSummaryBtn").addEventListener("click",()=>exportCsv("case"));
+$("exportBtn").addEventListener("click",()=>exportCsv("detail"));
 supabase.auth.onAuthStateChange(()=>setTimeout(load,50));
 load().catch(err=>{console.error(err);alert("Erro ao carregar o painel administrativo.");});
