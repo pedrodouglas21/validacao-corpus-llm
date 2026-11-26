@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Administração — Validação do Corpus</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./styles.css?v=20261126-1" />
 </head>
 <body>
   <div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>
@@ -41,8 +41,12 @@
       <section class="panel">
         <div class="panel-title-row">
           <div><h2>Casos</h2><p class="muted">I-CVI = proporção de avaliações globais 3–4 entre respostas completas.</p></div>
-          <button id="exportBtn" class="ghost small" type="button">Exportar CSV (Excel)</button>
+          <div class="export-actions">
+            <button id="exportBtn" class="primary small" type="button">Exportar CSV completo</button>
+            <button id="exportSummaryBtn" class="ghost small" type="button" disabled>Exportar resumo por caso</button>
+          </div>
         </div>
+        <p id="exportMessage" class="message export-message" role="status" aria-live="polite"></p>
         <div class="table-wrap">
           <table>
             <thead><tr>
@@ -60,6 +64,6 @@
     </section>
   </main>
 
-  <script type="module" src="./admin.js?v=20261004-1"></script>
+  <script type="module" src="./admin.js?v=20261126-1"></script>
 </body>
 </html>
