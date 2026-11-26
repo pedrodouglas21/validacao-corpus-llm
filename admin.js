@@ -1,5 +1,9 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/+esm";
 import { CONFIG } from "./config.js";
+import {
+  SUMMARY_COLUMNS, COMPLETE_COLUMNS, CASE_EXPORT_FIELDS, EVALUATION_EXPORT_FIELDS,
+  PROFILE_EXPORT_FIELDS, buildCompleteRows, fetchExportRows, isTechnicalCode, makeCsv
+} from "./admin-export.js";
 const $ = id => document.getElementById(id);
 
 if (!CONFIG.SUPABASE_URL || CONFIG.SUPABASE_URL.includes("SEU-PROJETO")) throw new Error("Configure config.js");
@@ -10,22 +14,47 @@ let rows=[];
 function esc(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[ch]));}
 function badge(status){const safe=["PENDENTE","APTO","APTO_CVI_COM_ALERTA","REVISAR"].includes(status)?status:"PENDENTE";return `<span class="status ${safe}">${safe.replaceAll("_"," ")}</span>`}
 function fmt(x,d=3){return x===null||x===undefined?"—":Number(x).toFixed(d)}
-function csvEscape(v){
-  const s=v==null?"":typeof v==="number"?String(v).replace(".",","):String(v);
-  return /[";\r\n]/.test(s)?`"${s.replaceAll('"','""')}"`:s;
-}
-function downloadCsv(data){
-  const cols=["case_code","proposed_role","backup_rank","n_ratings","i_cvi","mean_pertinence","mean_complexity","mean_representativeness","mean_global_adequacy","blocking_flags","status","source_candidate_id","original_case_id"];
-  // Excel em português: uma coluna por campo e vírgula como separador decimal.
-  const csv=[cols.join(";"),...data.map(r=>cols.map(c=>csvEscape(r[c])).join(";"))].join("\r\n")+"\r\n";
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}));a.download="validacao_corpus_resultados.csv";a.click();URL.revokeObjectURL(a.href);
+function downloadCsv(data, columns, filename){
+  const href=URL.createObjectURL(new Blob([makeCsv(data, columns)],{type:"text/csv;charset=utf-8"}));
+  const a=document.createElement("a");
+  a.href=href;
+  a.download=filename;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(href),1000);
 }
 async function isAdmin(){
   const {data,error}=await supabase.rpc("is_admin"); if(error)return false; return !!data;
 }
+async function exportComplete(){
+  const button=$("exportBtn"), message=$("exportMessage");
+  button.disabled=true;
+  message.className="message export-message";
+  message.textContent="Preparando o CSV completo…";
+  try{
+    if(!await isAdmin()) throw new Error("Acesso administrativo necessário.");
+    const [cases,profiles,evaluations,codes]=await Promise.all([
+      fetchExportRows(supabase,"v_admin_case_status",CASE_EXPORT_FIELDS,"case_code"),
+      fetchExportRows(supabase,"evaluator_profiles",PROFILE_EXPORT_FIELDS,"user_id"),
+      fetchExportRows(supabase,"evaluations",EVALUATION_EXPORT_FIELDS,"id"),
+      fetchExportRows(supabase,"evaluator_codes","id,label,active","id")
+    ]);
+    const detail=buildCompleteRows(cases,profiles,codes,evaluations,new Date().toISOString());
+    downloadCsv(detail,COMPLETE_COLUMNS,"validacao_corpus_completo.csv");
+    message.classList.add("ok");
+    message.textContent=`CSV completo gerado: ${detail.length} linhas de dados.`;
+  }catch(error){
+    message.classList.add("error");
+    message.textContent="Não foi possível exportar o CSV completo. Atualize a página e tente novamente.";
+    console.error("Falha na exportação completa:",error.message);
+  }finally{
+    button.disabled=false;
+  }
+}
 async function load(){
   const ok=await isAdmin();
-  if(!ok){$("adminLogin").classList.remove("hidden");$("adminView").classList.add("hidden");return;}
+  if(!ok){rows=[];$("exportSummaryBtn").disabled=true;$("adminLogin").classList.remove("hidden");$("adminView").classList.add("hidden");return;}
   $("adminLogin").classList.add("hidden");$("adminView").classList.remove("hidden");
   const [{data:caseRows,error:e1},{data:profiles,error:e2},{data:evals,error:e3},{data:codes,error:e4}] = await Promise.all([
     supabase.from("v_admin_case_status").select("*").order("case_code"),
@@ -35,9 +64,10 @@ async function load(){
   ]);
   if(e1||e2||e3||e4) throw e1||e2||e3||e4;
   rows=caseRows||[];
+  $("exportSummaryBtn").disabled=!rows.length;
   // Chaves técnicas ficam preservadas para auditoria, mas não entram nos indicadores oficiais.
   const technicalCodeIds=new Set((codes||[])
-    .filter(c=>String(c.label||"").trim().toUpperCase().startsWith("TESTE"))
+    .filter(isTechnicalCode)
     .map(c=>c.id));
   const technicalUserIds=new Set((profiles||[])
     .filter(p=>technicalCodeIds.has(p.code_id))
@@ -86,6 +116,7 @@ $("adminLoginForm").addEventListener("submit",async e=>{
   $("adminLoginMessage").className=error?"message error span-2":"message ok span-2";
 });
 $("logoutBtn").addEventListener("click",async()=>{await supabase.auth.signOut();location.reload();});
-$("exportBtn").addEventListener("click",()=>downloadCsv(rows));
+$("exportBtn").addEventListener("click",exportComplete);
+$("exportSummaryBtn").addEventListener("click",()=>downloadCsv(rows,SUMMARY_COLUMNS,"validacao_corpus_resultados.csv"));
 supabase.auth.onAuthStateChange(()=>setTimeout(load,50));
 load().catch(err=>{console.error(err);alert("Erro ao carregar o painel administrativo.");});

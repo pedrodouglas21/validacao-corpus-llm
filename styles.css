@@ -404,6 +404,21 @@ textarea:focus{
   margin-bottom:15px;
 }
 
+.export-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.export-actions button:disabled{
+  cursor:wait;
+  opacity:.65;
+}
+
+.export-message:empty{
+  display:none;
+}
+
 /* CASO CLÍNICO
    IMPORTANTE:
    sem altura máxima e sem rolagem interna.
