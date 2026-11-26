@@ -108,6 +108,25 @@ export function buildCompleteRows(cases, profiles, codes, evaluations, exportedA
   return rows;
 }
 
+export function buildCaseSummaryWithComments(cases, detail) {
+  const labels = [...new Set(detail.map(row => row.evaluator_label))]
+    .sort((a,b) => a.localeCompare(b, "pt-BR", {numeric:true}));
+  const commentColumns = new Map(labels.map(label => {
+    const number = label.match(/^Especialista (\d+)$/)?.[1];
+    return [label, number ? `comentario_especialista_${number}` : `comentario_${label.toLowerCase().replaceAll("-", "_")}`];
+  }));
+  const commentsByCase = new Map();
+  for (const row of detail) {
+    if (row.comment == null) continue;
+    if (!commentsByCase.has(row.case_id)) commentsByCase.set(row.case_id, {});
+    commentsByCase.get(row.case_id)[commentColumns.get(row.evaluator_label)] = row.comment;
+  }
+  return {
+    columns: [...SUMMARY_COLUMNS, ...commentColumns.values()],
+    rows: cases.map(row => ({...row, ...commentsByCase.get(row.case_id)}))
+  };
+}
+
 export async function fetchExportRows(client, table, columns, orderBy) {
   const rows = [];
   const batchSize = 500;
